@@ -9,7 +9,8 @@ Anaconda Python distribution with Python >= 3.6 recommended
 From Anaconda prompt
 
 * Get help information
-```$ cellpose_filter -h
+```
+$ cellpose_filter -h
 
 usage: cellpose_filter [-h] [--min-area MIN_AREA] [--max-area MAX_AREA]
                        [--min-circularity MIN_CIRC]
@@ -32,11 +33,11 @@ optional arguments:
 
 ## Example
 
-### Single *<my_seg.npy>* file
-$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <my_seg.npy file>
+### Single file: *<my_seg.npy>*
+`$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <my_seg.npy>`
 
 ### Entire folder containing *_seg.npy* files
-$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <folder containing files>
+`$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <folder containing files>`
 
 ## Output
 * tif label images
