@@ -1,6 +1,6 @@
 from setuptools import setup
 
-from cellpose_filter import description
+from cellpose_filter.cellpose_filter import description
 
 setup(
     name = "CellPose filter",
@@ -11,11 +11,14 @@ setup(
     long_description_content_type='text/markdown',
     url='https://git.ist.ac.at/csommer/cellpose_filter',
     entry_points = {'console_scripts': [
-            'cellpose_filter=cellpose_filter:main',
+            'cellpose_filter=cellpose_filter.cellpose_filter:main',
         ]},
     author = "Christoph Sommer",
     author_email = "christoph.sommer23@gmail.com",
     install_requires=[
-
-      ]
+            "scikit_image",
+            "tifffile",
+            "pandas",
+            "matplotlib"
+                    ]
     )

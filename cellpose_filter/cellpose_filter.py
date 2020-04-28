@@ -3,6 +3,7 @@ import glob
 import numpy
 import pandas
 import argparse
+import warnings
 #import read_roi
 import tifffile
 
@@ -71,6 +72,7 @@ def get_args():
     return parser.parse_args()
 
 def run_file(fn, args, display):
+    print(f" * Process {fn}")
     args = get_args()
 
     npy = numpy.load(fn, allow_pickle=True)[()]
@@ -103,10 +105,13 @@ def run_file(fn, args, display):
 
         tab.to_csv(f, sep="\t")
 
+    print(f" -> Done")
 
 def main():
+    warnings.simplefilter("ignore")
+
     args = get_args()
-    print(args)
+    print("Running CellPose filter...")
 
     if os.path.isfile(args.input[0]):
         run_file(args.input[0], args, display=True)
@@ -114,8 +119,9 @@ def main():
     elif os.path.isdir(args.input[0]):
         fn_list = glob.glob(os.path.join(args.input[0], "*seg.npy"))
         for fn in fn_list:
-            run_file(args.input[0], args, display=False)
+            run_file(fn, args, display=False)
 
+    print("Finished")
 
 
 
