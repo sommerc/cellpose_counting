@@ -11,7 +11,10 @@ From Anaconda prompt
 * Get help information
 ```
 $ cellpose_filter -h
+```
+will output:
 
+```
 usage: cellpose_filter [-h] [--min-area MIN_AREA] [--max-area MAX_AREA]
                        [--min-circularity MIN_CIRC]
                        input [input ...]
@@ -27,19 +30,21 @@ optional arguments:
   --min-area MIN_AREA   Minimum area in pixels
   --max-area MAX_AREA   Maximum area in pixels
   --min-circularity MIN_CIRC
-                        Minimum circlularity (0-1;1 being perfect circle)
+                        Minimum circlularity (0-1; 1 being perfect circle)
 
 ```
 
-## Example
+## Example processing:
 
 ### Single file: *<my_seg.npy>*
 `$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <my_seg.npy>`
+when filtering single files a preview window will open
 
 ### Entire folder containing *_seg.npy* files
 `$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <folder containing files>`
 
-## Output
-* tif label images
-* table with filtered results (Excel readable)
+## Output:
+In the same folder as input file
+* Tif label images containing only the filtered cells
+* Table with filtered results (Excel readable)
 
