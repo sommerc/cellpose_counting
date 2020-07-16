@@ -157,6 +157,9 @@ def run_file(fn, args, display):
     rp_tab = measure.regionprops_table(seg_new, intensity_image=img, properties=['label', 'area', 'mean_intensity', 'centroid', ], cache=True, separator='-')
     tab = pandas.DataFrame(rp_tab)
 
+    if fn_base.endswith("_seg"):
+        fn_base = fn_base[:-4]
+
     other_tabs = []
     for other_img_fn in glob.glob(f"{fn_base}*.tif"):
         col_name = other_img_fn[len(fn_base)+1:-4]
@@ -171,7 +174,7 @@ def run_file(fn, args, display):
 
 
 
-    with open(fn_base + "_flt.tab", 'w', newline='') as f:
+    with open(fn_base + "_filtered.tab", 'w', newline='') as f:
         f.write(f'# Count: {len(tab)}\n')
         f.write(f'#  - Min-area: {args.min_area}\n')
         f.write(f'#  - Max-area: {args.max_area}\n')
