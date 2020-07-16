@@ -1,5 +1,4 @@
 import os
-import re
 import glob
 import numpy
 import pandas
@@ -110,10 +109,10 @@ def get_args():
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('input',  type=str, nargs="+", help="Files or directory to process")
     parser.add_argument('--min-area', dest="min_area", type=int, help="Minimum area in pixels", default=1)
-    parser.add_argument('--max-area', dest="max_area", type=int, help="Maximum area in pixels", default=999999)
+    parser.add_argument('--max-area', dest="max_area", type=int, help="Maximum area in pixels", default=9999999)
     parser.add_argument('--min-circularity', dest="min_circ", type=float, help="Minimum circlularity (0-1;1 being perfect circle) ", default=0)
     parser.add_argument('--min-roundness', dest="min_round", type=float, help="Minimum roundness (0-1;1 being perfect circle) ", default=0)
-    parser.add_argument('--min-solidity', dest="min_solid", type=float, help="Minimum solidity (0-1; ratio of area and conv_hull(area)) ", default=0)
+    parser.add_argument('--min-solidity', dest="min_solid", type=float, help="Minimum solidity (0-1; ratio of region and its convex hull ", default=0)
 
     return parser.parse_args()
 

@@ -1,6 +1,6 @@
 ## CellPose filter
 
-## Install 
+## Install
 Anaconda Python distribution with Python >= 3.6 recommended
 
 ```pip install -U git+https://git.ist.ac.at/csommer/cellpose_filter.git```
@@ -17,6 +17,7 @@ will output:
 ```
 usage: cellpose_filter [-h] [--min-area MIN_AREA] [--max-area MAX_AREA]
                        [--min-circularity MIN_CIRC]
+                       [--min-roundness MIN_ROUND] [--min-solidity MIN_SOLID]
                        input [input ...]
 
 Filter cellpose segmentations and create filtered tif and csv output of the
@@ -30,8 +31,12 @@ optional arguments:
   --min-area MIN_AREA   Minimum area in pixels
   --max-area MAX_AREA   Maximum area in pixels
   --min-circularity MIN_CIRC
-                        Minimum circlularity (0-1; 1 being perfect circle)
-
+                        Minimum circlularity (0-1;1 being perfect circle)
+  --min-roundness MIN_ROUND
+                        Minimum roundness (0-1;1 being perfect circle)
+  --min-solidity MIN_SOLID
+                        Minimum solidity (0-1; ratio of region and its
+                        conv_hull(region))
 ```
 
 ## Example processing:
@@ -45,6 +50,5 @@ when filtering single files a preview window will open
 
 ## Output:
 In the same folder as input file
-* Tif label images containing only the filtered cells
 * Table with filtered results (Excel readable)
 
