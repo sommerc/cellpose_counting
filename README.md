@@ -6,7 +6,9 @@ see [crop_rois_czi.py](./imagej/README.md)
 ## Install
 Anaconda Python distribution with Python >= 3.6 recommended
 
-```pip install -U git+https://git.ist.ac.at/csommer/cellpose_filter.git```
+1. git clone this repository
+2. `cd cellpose_filter`
+3. `pip install -e .
 
 ## Usage
 From Anaconda prompt

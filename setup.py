@@ -5,7 +5,7 @@ from cellpose_filter.cellpose_filter import description
 setup(
     name = "CellPose filter",
     packages = ["cellpose_filter"],
-    version = 0.2,
+    version = 0.3,
     description = description,
     long_description = description,
     long_description_content_type='text/markdown',
@@ -16,7 +16,7 @@ setup(
     author = "Christoph Sommer",
     author_email = "christoph.sommer23@gmail.com",
     install_requires=[
-            "scikit_image",
+            "scikit-image",
             "tifffile",
             "pandas",
             "matplotlib",
