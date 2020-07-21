@@ -1,5 +1,5 @@
 ## Cut and crop ImageJ macro
-see [crop_rois_czi.py](./imagej)
+see [crop_rois_czi.py](./imagej/README.md)
 
 ## CellPose filter
 
