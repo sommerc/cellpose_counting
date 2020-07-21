@@ -4,7 +4,9 @@
 #@ String (visibility=MESSAGE, value="Channels will be split and files for each ROI in RoiManager will be saved as tif") msg2
 #@ String (visibility=MESSAGE, value="<html><b>Mapping of filters from CZI metadata</b><br/><ol><li>Hoechst 33342 &nbsp;: blue</li><li>Alexa Fluor 488 : green</li><li>Alexa Fluor 594 : red</li><li>Alexa Fluor 647 : yellow</li></ol></html>") msg3
 #@ String (label="Color for segmentation", choices={"blue", "green", "red", "yellow"}, style="listBox") seg_choice
+#@ Integer (label="CellPose diamteter", value=30) diameter
 #@ boolean (value=false, label="Copy CellPose run command to clipboard") run_cp
+
 __author__ = "christoph.sommer@ist.ac.at"
 
 # imports
@@ -22,7 +24,7 @@ CHANNEL_TO_COLOR = {
     "Alexa Fluor 594" : "red"
 }
 
-CELLPOSE_CMD_TEMP = "python -m cellpose --dir {} --img_filter blue --use_gpu --pretrained_model cyto --diameter 30"
+CELLPOSE_CMD_TEMP = "python -m cellpose --dir {dir} --img_filter {seg_choice} --use_gpu --pretrained_model cyto --diameter {diameter}"
 
 # functions
 
@@ -80,14 +82,11 @@ def main():
         
     os.system("explorer {}".format(out_dir))
 
-    print(run_cp)
-    print(out_dir)
-    
     if run_cp:
         import subprocess
-        subprocess.Popen(['clip'], stdin=subprocess.PIPE).communicate(CELLPOSE_CMD_TEMP.format(out_dir))
+        subprocess.Popen(['clip'], stdin=subprocess.PIPE).communicate(CELLPOSE_CMD_TEMP.format(dir=out_dir, seg_choice=seg_choice, diameter=diameter))
 
 
-    
+ 
 if __name__ in ("__main__", "__builtin__"):
     main()
