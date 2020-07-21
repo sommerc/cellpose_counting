@@ -20,7 +20,7 @@ description = """Filter cellpose segmentations and create filtered tif and csv o
 # uugly
 to_delete = []
 
-def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3):
+def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3, title=""):
     border  = segmentation.find_boundaries(seg, mode='inner')
     border2 = segmentation.find_boundaries(seg2, mode='inner')
 
@@ -59,6 +59,7 @@ def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3):
 
     f, ax = plt.subplots(2,3, sharex=True, sharey=True, figsize=(24, 8))
 
+
     ax_cp     = ax[0,0]
     ax_cp_flt = ax[1,0]
     ax_other  = ax[:, 1:].flat
@@ -70,7 +71,7 @@ def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3):
     ax_cp.imshow(border, cmap=bcmap)
     ax_cp_flt.imshow(border2, cmap=bcmap)
 
-    ax_cp.set_title("CellPose original")
+    ax_cp.set_title(f"CellPose original\n{title}")
     ax_cp_flt.set_title("Filtered (double click on cell to delete)")
 
     for i, (col_name, other_im) in enumerate(other_imgs.items()):
@@ -121,6 +122,7 @@ def apply_filter(seg, img, min_area, max_area, min_circularity, min_roundness, m
 def get_args():
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('input',  type=str, nargs="+", help="Files or directory to process")
+    parser.add_argument('--no-display', dest="no_display", action="store_true")
     parser.add_argument('--min-area', dest="min_area", type=int, help="Minimum area in pixels", default=0)
     parser.add_argument('--max-area', dest="max_area", type=int, help="Maximum area in pixels", default=9999999)
     parser.add_argument('--min-circularity', dest="min_circ", type=float, help="Minimum circlularity (0-1;1 being perfect circle) ", default=0)
@@ -174,7 +176,7 @@ def run_file(fn, args, display):
                                      min_solidity=args.min_solid
                                      )
     if display:
-        seg_show(img, rp_tab, seg, seg_new, other_imgs)
+        seg_show(img, rp_tab, seg, seg_new, other_imgs, title=os.path.basename(fn_base))
         plt.show()
 
     global to_delete
@@ -246,12 +248,12 @@ def main():
     print("Running CellPose filter...")
 
     if os.path.isfile(args.input[0]):
-        run_file(args.input[0], args, display=True)
+        run_file(args.input[0], args, not args.no_display)
         plt.show()
     elif os.path.isdir(args.input[0]):
         fn_list = glob.glob(os.path.join(args.input[0], "*seg.npy"))
         for fn in fn_list:
-            run_file(fn, args, display=False)
+            run_file(fn, args, display=not args.no_display)
     else:
         print("  -- File or directory does not exist... aborting")
 
