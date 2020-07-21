@@ -1,0 +1,7 @@
+dist/
+build/
+CellPose_filter.egg-info/
+*.tab
+*.pyc
+*.tif
+*.npy
