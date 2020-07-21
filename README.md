@@ -1,3 +1,6 @@
+## Cut and crop ImageJ macro
+see [crop_rois_czi.py](./imagej)
+
 ## CellPose filter
 
 ## Install
@@ -15,8 +18,8 @@ $ cellpose_filter -h
 will output:
 
 ```
-usage: cellpose_filter [-h] [--min-area MIN_AREA] [--max-area MAX_AREA]
-                       [--min-circularity MIN_CIRC]
+usage: cellpose_filter [-h] [--no-display] [--min-area MIN_AREA]
+                       [--max-area MAX_AREA] [--min-circularity MIN_CIRC]
                        [--min-roundness MIN_ROUND] [--min-solidity MIN_SOLID]
                        input [input ...]
 
@@ -28,6 +31,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --no-display
   --min-area MIN_AREA   Minimum area in pixels
   --max-area MAX_AREA   Maximum area in pixels
   --min-circularity MIN_CIRC
@@ -35,20 +39,18 @@ optional arguments:
   --min-roundness MIN_ROUND
                         Minimum roundness (0-1;1 being perfect circle)
   --min-solidity MIN_SOLID
-                        Minimum solidity (0-1; ratio of region and its
-                        conv_hull(region))
+                        Minimum solidity (0-1; ratio of region and its convex hull
 ```
 
 ## Example processing:
 
 ### Single file: *<my_seg.npy>*
 `$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <my_seg.npy>`
-when filtering single files a preview window will open
 
 ### Entire folder containing *_seg.npy* files
 `$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <folder containing files>`
 
 ## Output:
 In the same folder as input file
-* Table with filtered results (Excel readable)
+* Excel table with filtered results
 
