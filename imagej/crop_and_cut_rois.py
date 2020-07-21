@@ -3,6 +3,7 @@
 #@ String (visibility=MESSAGE, value="<html><b>Split and cut ROIs for CellPose</b></html>") msg1
 #@ String (visibility=MESSAGE, value="Channels will be split and files for each ROI in RoiManager will be saved as tif") msg2
 #@ String (visibility=MESSAGE, value="<html><b>Mapping of filters from CZI metadata</b><br/><ol><li>Hoechst 33342 &nbsp;: blue</li><li>Alexa Fluor 488 : green</li><li>Alexa Fluor 594 : red</li><li>Alexa Fluor 647 : yellow</li></ol></html>") msg3
+#@ String (label="Color for segmentation", choices={"blue", "green", "red", "yellow"}, style="listBox") seg_choice
 #@ boolean (value=false, label="Copy CellPose run command to clipboard") run_cp
 __author__ = "christoph.sommer@ist.ac.at"
 
@@ -21,7 +22,7 @@ CHANNEL_TO_COLOR = {
     "Alexa Fluor 594" : "red"
 }
 
-CELLPOSE_CMD_TEMP = "python -m cellpose --dir {} --img_filter blue --use_gpu --pretrained_model cyto --diameter 18"
+CELLPOSE_CMD_TEMP = "python -m cellpose --dir {} --img_filter blue --use_gpu --pretrained_model cyto --diameter 30"
 
 # functions
 
