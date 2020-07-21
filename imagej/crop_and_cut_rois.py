@@ -3,7 +3,7 @@
 #@ String (visibility=MESSAGE, value="<html><b>Split and cut ROIs for CellPose</b></html>") msg1
 #@ String (visibility=MESSAGE, value="Channels will be split and files for each ROI in RoiManager will be saved as tif") msg2
 #@ String (visibility=MESSAGE, value="<html><b>Mapping of filters from CZI metadata</b><br/><ol><li>Hoechst 33342 &nbsp;: blue</li><li>Alexa Fluor 488 : green</li><li>Alexa Fluor 594 : red</li><li>Alexa Fluor 647 : yellow</li></ol></html>") msg3
-#@ boolean (value=false, label="Run CellPose (works only if CellPose is installed)") run_cp
+#@ boolean (value=false, label="Copy CellPose run command to clipboard") run_cp
 __author__ = "christoph.sommer@ist.ac.at"
 
 # imports
@@ -20,6 +20,8 @@ CHANNEL_TO_COLOR = {
     "Alexa Fluor 647" : "yellow",
     "Alexa Fluor 594" : "red"
 }
+
+CELLPOSE_CMD_TEMP = "python -m cellpose --dir {} --img_filter blue --use_gpu --pretrained_model cyto --diameter 18"
 
 # functions
 
@@ -79,10 +81,10 @@ def main():
 
     print(run_cp)
     print(out_dir)
+    
     if run_cp:
-        from subprocess import Popen
-        cmd = 'cmd /k "cd /d {}"'.format(out_dir)
-        Popen(cmd)
+        import subprocess
+        subprocess.Popen(['clip'], stdin=subprocess.PIPE).communicate(CELLPOSE_CMD_TEMP.format(out_dir))
 
 
     
