@@ -20,6 +20,7 @@ setup(
             "tifffile",
             "pandas",
             "matplotlib",
-            "mpldatacursor"
+            "mpldatacursor",
+            "openpyxl"
                     ]
     )
