@@ -20,7 +20,7 @@ description = """Filter cellpose segmentations and create filtered tif and csv o
 # uugly
 to_delete = []
 
-def seg_show(img, rp, seg, seg2, ax=None, alpha=0.3):
+def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3):
     border  = segmentation.find_boundaries(seg, mode='inner')
     border2 = segmentation.find_boundaries(seg2, mode='inner')
 
@@ -57,29 +57,42 @@ def seg_show(img, rp, seg, seg2, ax=None, alpha=0.3):
 
             return res
 
-    f, ax = plt.subplots(1,2, sharex=True, sharey=True, figsize=(20,10))
+    f, ax = plt.subplots(2,3, sharex=True, sharey=True, figsize=(24, 8))
 
-    ax[0].imshow(img, 'gray')
-    ax[1].imshow(img, 'gray')
-    ax[0].imshow(seg, cmap=cmap, vmin=0, vmax=vmax)
-    ax[1].imshow(seg2, cmap=cmap, vmin=0, vmax=vmax)
-    ax[0].imshow(border, cmap=bcmap)
-    ax[1].imshow(border2, cmap=bcmap)
-    for a in ax: a.set_axis_off()
-    ax[0].set_title("CellPose original")
-    ax[1].set_title("Filtered (double click on cell to delete)")
+    ax_cp     = ax[0,0]
+    ax_cp_flt = ax[1,0]
+    ax_other  = ax[:, 1:].flat
+
+    ax_cp.imshow(img, 'gray')
+    ax_cp_flt.imshow(img, 'gray')
+    ax_cp.imshow(seg, cmap=cmap, vmin=0, vmax=vmax)
+    ax_cp_flt.imshow(seg2, cmap=cmap, vmin=0, vmax=vmax)
+    ax_cp.imshow(border, cmap=bcmap)
+    ax_cp_flt.imshow(border2, cmap=bcmap)
+
+    ax_cp.set_title("CellPose original")
+    ax_cp_flt.set_title("Filtered (double click on cell to delete)")
+
+    for i, (col_name, other_im) in enumerate(other_imgs.items()):
+        ax_other[i].imshow(other_im, "gray")
+        ax_other[i].set_title(col_name)
+
+    for a in ax.flat: a.set_axis_off()
+
+    ax[0,0].set_aspect(1.)
+
     plt.tight_layout()
 
-    datacursor(artists=ax[0], formatter=MyFormatter(seg, rp), hover=True)
+    datacursor(artists=ax_cp, formatter=MyFormatter(seg, rp), hover=True)
 
     def onclick(event):
 
-        if event.xdata != None and event.ydata != None and event.inaxes == ax[1] and event.dblclick:
+        if event.xdata != None and event.ydata != None and event.inaxes == ax_cp_flt and event.dblclick:
             label_to_delete = seg2[int(event.ydata+0.5), int(event.xdata+0.5)]
             if label_to_delete > 0:
                 global to_delete
                 to_delete.append(label_to_delete)
-                ax[1].plot([event.xdata], [event.ydata], "rx", linewidth=2)
+                ax_cp_flt.plot([event.xdata], [event.ydata], "rx", linewidth=2)
 
     cid = f.canvas.mpl_connect('button_press_event', onclick)
 
@@ -108,7 +121,7 @@ def apply_filter(seg, img, min_area, max_area, min_circularity, min_roundness, m
 def get_args():
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('input',  type=str, nargs="+", help="Files or directory to process")
-    parser.add_argument('--min-area', dest="min_area", type=int, help="Minimum area in pixels", default=1)
+    parser.add_argument('--min-area', dest="min_area", type=int, help="Minimum area in pixels", default=0)
     parser.add_argument('--max-area', dest="max_area", type=int, help="Maximum area in pixels", default=9999999)
     parser.add_argument('--min-circularity', dest="min_circ", type=float, help="Minimum circlularity (0-1;1 being perfect circle) ", default=0)
     parser.add_argument('--min-roundness', dest="min_round", type=float, help="Minimum roundness (0-1;1 being perfect circle) ", default=0)
@@ -127,7 +140,7 @@ def run_file(fn, args, display):
     seg = npy["masks"]
 
     # relabel
-    seg = measure.label(seg, background=-1)
+    seg = measure.label(seg)
 
     # remove holes
     rp = measure.regionprops(seg)
@@ -138,6 +151,22 @@ def run_file(fn, args, display):
             y_coords, x_coords = numpy.nonzero(no_holes)
             seg[r.bbox[0] + y_coords, r.bbox[1] + x_coords] = r.label
 
+    # check for other images to quantify
+    if fn_base.endswith("_seg"):
+        fn_base = fn_base[:-4]
+
+    for color in ["blue", "green", "yellow", "red"]:
+        if fn_base.endswith(color):
+            fn_base =fn_base = fn_base[:-len(color)]
+
+    other_imgs = {}
+    for other_img_fn in glob.glob(f"{fn_base}*.tif"):
+        col_name = other_img_fn[len(fn_base):-4]
+        print("  -- loading auxilary image", col_name)
+        other_imgs[col_name] = tifffile.imread(other_img_fn)
+
+
+
     seg_new, rp_tab = apply_filter(seg, img, min_area=args.min_area,
                                      max_area=args.max_area,
                                      min_circularity=args.min_circ,
@@ -145,7 +174,7 @@ def run_file(fn, args, display):
                                      min_solidity=args.min_solid
                                      )
     if display:
-        seg_show(img, rp_tab, seg, seg_new)
+        seg_show(img, rp_tab, seg, seg_new, other_imgs)
         plt.show()
 
     global to_delete
@@ -157,33 +186,56 @@ def run_file(fn, args, display):
     rp_tab = measure.regionprops_table(seg_new, intensity_image=img, properties=['label', 'area', 'mean_intensity', 'centroid', ], cache=True, separator='-')
     tab = pandas.DataFrame(rp_tab)
 
-    if fn_base.endswith("_seg"):
-        fn_base = fn_base[:-4]
 
-    other_tabs = []
-    for other_img_fn in glob.glob(f"{fn_base}*.tif"):
-        col_name = other_img_fn[len(fn_base)+1:-4]
-        print("  -- reading intensity from", col_name)
-        other_img = tifffile.imread(other_img_fn)
-
+    for col_name, other_img in other_imgs.items():
         other_tab = measure.regionprops_table(seg_new, intensity_image=other_img, properties=['mean_intensity' ], cache=True, separator='-')
         other_vals = other_tab['mean_intensity']
 
-        tab[col_name] = other_vals
+        tab[col_name+'_mean_intensity'] = other_vals
 
+    global_info_df = pandas.DataFrame({
+        "Total count" : len(tab),
+        "Min-area"    : args.min_area,
+        "Max-area"    : args.max_area,
+        "Min-circularity"    : args.min_circ,
+        "Min-roundness"    : args.min_round,
+        "Min-solidity"    : args.min_solid,
+    }, index=[0])
 
+    dyn_thresh_df = {}
+    helper  = "FGHI"
+    helper2 = "BCDE"
 
+    start_row = 12
 
-    with open(fn_base + "_filtered.tab", 'w', newline='') as f:
-        f.write(f'# Count: {len(tab)}\n')
-        f.write(f'#  - Min-area: {args.min_area}\n')
-        f.write(f'#  - Max-area: {args.max_area}\n')
-        f.write(f'#  - Min-circularity: {args.min_circ}\n')
-        f.write(f'#  - Min-roundness: {args.min_round}\n')
-        f.write(f'#  - Min-solidity: {args.min_solid}\n')
-        f.write("\n")
+    total_countif = []
+    for col_i, col_name in enumerate(other_imgs.keys()):
+        # set thershold to zero
+        dyn_thresh_df[col_name] = [0]
 
-        tab.to_csv(f, sep="\t")
+        # data range of column
+        rng  = f'{helper[col_i]}{start_row}:{helper[col_i]}{start_row+len(tab)-1}'
+
+        # condition field
+        cond = f'">"&{helper2[col_i]}5'
+
+        # add
+        dyn_thresh_df[col_name].append(f'=COUNTIFS({rng}, {cond} )')
+
+        # combine to total (AND)
+        total_countif.append(f"{rng},{cond}")
+
+    total_countif = ",".join(total_countif)
+    total_countif = f"=COUNTIFS({total_countif})"
+
+    dyn_thresh_df = pandas.DataFrame(dyn_thresh_df, index=["Intensity thresh.", "Count"])
+
+    dyn_thresh_df["Total (AND)"] = ["", total_countif]
+
+    with pandas.ExcelWriter(fn_base + "_filtered.xlsx") as writer:
+        global_info_df.to_excel(writer, index=False)
+        dyn_thresh_df.to_excel(writer, startrow=3)
+        tab.to_excel(writer, startrow=10, index=False)
 
     print(f" -> Done")
 
