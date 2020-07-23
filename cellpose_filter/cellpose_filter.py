@@ -4,7 +4,8 @@ import numpy
 import pandas
 import argparse
 import warnings
-#import read_roi
+
+# import read_roi
 import tifffile
 
 from skimage import measure, segmentation, morphology
@@ -20,20 +21,21 @@ description = """Filter cellpose segmentations and create filtered tif and csv o
 # uugly
 to_delete = []
 
+
 def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3, title=""):
-    border  = segmentation.find_boundaries(seg, mode='inner')
-    border2 = segmentation.find_boundaries(seg2, mode='inner')
+    border = segmentation.find_boundaries(seg, mode="inner")
+    border2 = segmentation.find_boundaries(seg2, mode="inner")
 
     vmax = max(seg.max(), seg2.max())
 
     cmap = numpy.random.rand(vmax, 4)
-    cmap[0, :] = [0,0,0, 1]
+    cmap[0, :] = [0, 0, 0, 1]
     cmap[:, 3] = alpha
     cmap = matplotlib.colors.ListedColormap(cmap)
 
     bcmap = numpy.random.rand(2, 4)
-    bcmap[0, :] = [0,0,0, 0]
-    bcmap[1, :] = [1,1,1, 0.5]
+    bcmap[0, :] = [0, 0, 0, 0]
+    bcmap[1, :] = [1, 1, 1, 0.5]
 
     bcmap = matplotlib.colors.ListedColormap(bcmap)
 
@@ -44,11 +46,11 @@ def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3, title=""):
 
         def __call__(self, x, y, **kwargs):
             try:
-                label = self.seg[int(y+0.5), int(x+0.5)]
+                label = self.seg[int(y + 0.5), int(x + 0.5)]
             except:
                 return
 
-            if label == 0 or (label > len(self.rp)-1):
+            if label == 0 or (label > len(self.rp) - 1):
                 return
 
             res = ""
@@ -57,15 +59,14 @@ def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3, title=""):
 
             return res
 
-    f, ax = plt.subplots(2,3, sharex=True, sharey=True, figsize=(24, 8))
+    f, ax = plt.subplots(2, 3, sharex=True, sharey=True, figsize=(24, 8))
 
+    ax_cp = ax[0, 0]
+    ax_cp_flt = ax[1, 0]
+    ax_other = ax[:, 1:].flat
 
-    ax_cp     = ax[0,0]
-    ax_cp_flt = ax[1,0]
-    ax_other  = ax[:, 1:].flat
-
-    ax_cp.imshow(img, 'gray')
-    ax_cp_flt.imshow(img, 'gray')
+    ax_cp.imshow(img, "gray")
+    ax_cp_flt.imshow(img, "gray")
     ax_cp.imshow(seg, cmap=cmap, vmin=0, vmax=vmax)
     ax_cp_flt.imshow(seg2, cmap=cmap, vmin=0, vmax=vmax)
     ax_cp.imshow(border, cmap=bcmap)
@@ -78,9 +79,10 @@ def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3, title=""):
         ax_other[i].imshow(other_im, "gray")
         ax_other[i].set_title(col_name)
 
-    for a in ax.flat: a.set_axis_off()
+    for a in ax.flat:
+        a.set_axis_off()
 
-    ax[0,0].set_aspect(1.)
+    ax[0, 0].set_aspect(1.0)
 
     plt.tight_layout()
 
@@ -88,48 +90,95 @@ def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3, title=""):
 
     def onclick(event):
 
-        if event.xdata != None and event.ydata != None and event.inaxes == ax_cp_flt and event.dblclick:
-            label_to_delete = seg2[int(event.ydata+0.5), int(event.xdata+0.5)]
+        if (
+            event.xdata != None
+            and event.ydata != None
+            and event.inaxes == ax_cp_flt
+            and event.dblclick
+        ):
+            label_to_delete = seg2[int(event.ydata + 0.5), int(event.xdata + 0.5)]
             if label_to_delete > 0:
                 global to_delete
                 to_delete.append(label_to_delete)
                 ax_cp_flt.plot([event.xdata], [event.ydata], "rx", linewidth=2)
 
-    cid = f.canvas.mpl_connect('button_press_event', onclick)
+    cid = f.canvas.mpl_connect("button_press_event", onclick)
 
 
-def apply_filter(seg, img, min_area, max_area, min_circularity, min_roundness, min_solidity):
+def apply_filter(
+    seg, img, min_area, max_area, min_circularity, min_roundness, min_solidity
+):
     rp = measure.regionprops(seg, intensity_image=img)
     for r in rp:
-        r.circularity = numpy.clip(4*numpy.pi*(r.area/r.perimeter**2), 0, 1)
-        r.roundness   = numpy.clip(4 * (r.area) / (numpy.pi * r.major_axis_length**2), 0, 1)
+        r.circularity = numpy.clip(4 * numpy.pi * (r.area / r.perimeter ** 2), 0, 1)
+        r.roundness = numpy.clip(
+            4 * (r.area) / (numpy.pi * r.major_axis_length ** 2), 0, 1
+        )
 
     seg = seg.copy()
     for r in rp:
         remove = False
-        if r.area < min_area: remove=True
-        if r.area > max_area: remove=True
-        if r.circularity < min_circularity: remove=True
-        if r.roundness < min_roundness: remove=True
-        if r.solidity < min_solidity: remove=True
+        if r.area < min_area:
+            remove = True
+        if r.area > max_area:
+            remove = True
+        if r.circularity < min_circularity:
+            remove = True
+        if r.roundness < min_roundness:
+            remove = True
+        if r.solidity < min_solidity:
+            remove = True
 
-        if remove: seg[r.coords[:, 0], r.coords[:, 1]] = 0
-
-
+        if remove:
+            seg[r.coords[:, 0], r.coords[:, 1]] = 0
 
     return seg, rp
 
+
 def get_args():
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('input',  type=str, nargs="+", help="Files or directory to process")
-    parser.add_argument('--no-display', dest="no_display", action="store_true")
-    parser.add_argument('--min-area', dest="min_area", type=int, help="Minimum area in pixels", default=0)
-    parser.add_argument('--max-area', dest="max_area", type=int, help="Maximum area in pixels", default=9999999)
-    parser.add_argument('--min-circularity', dest="min_circ", type=float, help="Minimum circlularity (0-1;1 being perfect circle) ", default=0)
-    parser.add_argument('--min-roundness', dest="min_round", type=float, help="Minimum roundness (0-1;1 being perfect circle) ", default=0)
-    parser.add_argument('--min-solidity', dest="min_solid", type=float, help="Minimum solidity (0-1; ratio of region and its convex hull ", default=0)
+    parser.add_argument(
+        "input", type=str, nargs="+", help="Files or directory to process"
+    )
+    parser.add_argument("--no-display", dest="no_display", action="store_true")
+    parser.add_argument(
+        "--min-area",
+        dest="min_area",
+        type=int,
+        help="Minimum area in pixels",
+        default=0,
+    )
+    parser.add_argument(
+        "--max-area",
+        dest="max_area",
+        type=int,
+        help="Maximum area in pixels",
+        default=9999999,
+    )
+    parser.add_argument(
+        "--min-circularity",
+        dest="min_circ",
+        type=float,
+        help="Minimum circlularity (0-1;1 being perfect circle) ",
+        default=0,
+    )
+    parser.add_argument(
+        "--min-roundness",
+        dest="min_round",
+        type=float,
+        help="Minimum roundness (0-1;1 being perfect circle) ",
+        default=0,
+    )
+    parser.add_argument(
+        "--min-solidity",
+        dest="min_solid",
+        type=float,
+        help="Minimum solidity (0-1; ratio of region and its convex hull ",
+        default=0,
+    )
 
     return parser.parse_args()
+
 
 def run_file(fn, args, display):
     print(f" * Process {fn}")
@@ -139,10 +188,16 @@ def run_file(fn, args, display):
 
     npy = numpy.load(fn, allow_pickle=True)[()]
     img = npy["img"]
+
+    if len(img.shape) == 3:
+        img = img[..., 0]
+
     seg = npy["masks"]
 
     # relabel
     seg = measure.label(seg)
+
+    print("a", seg.shape, img.shape)
 
     # remove holes
     rp = measure.regionprops(seg)
@@ -153,28 +208,33 @@ def run_file(fn, args, display):
             y_coords, x_coords = numpy.nonzero(no_holes)
             seg[r.bbox[0] + y_coords, r.bbox[1] + x_coords] = r.label
 
+    print("b", seg.shape, img.shape)
+
     # check for other images to quantify
     if fn_base.endswith("_seg"):
         fn_base = fn_base[:-4]
 
     for color in ["blue", "green", "yellow", "red"]:
         if fn_base.endswith(color):
-            fn_base =fn_base = fn_base[:-len(color)]
+            fn_base = fn_base = fn_base[: -len(color)]
 
     other_imgs = {}
     for other_img_fn in glob.glob(f"{fn_base}*.tif"):
-        col_name = other_img_fn[len(fn_base):-4]
+        col_name = other_img_fn[len(fn_base) : -4]
         print("  -- loading auxilary image", col_name)
         other_imgs[col_name] = tifffile.imread(other_img_fn)
 
+    print("c", seg.shape, img.shape)
 
-
-    seg_new, rp_tab = apply_filter(seg, img, min_area=args.min_area,
-                                     max_area=args.max_area,
-                                     min_circularity=args.min_circ,
-                                     min_roundness=args.min_round,
-                                     min_solidity=args.min_solid
-                                     )
+    seg_new, rp_tab = apply_filter(
+        seg,
+        img,
+        min_area=args.min_area,
+        max_area=args.max_area,
+        min_circularity=args.min_circ,
+        min_roundness=args.min_round,
+        min_solidity=args.min_solid,
+    )
     if display:
         seg_show(img, rp_tab, seg, seg_new, other_imgs, title=os.path.basename(fn_base))
         plt.show()
@@ -185,27 +245,41 @@ def run_file(fn, args, display):
 
     seg_new = measure.label(seg_new)
 
-    rp_tab = measure.regionprops_table(seg_new, intensity_image=img, properties=['label', 'area', 'mean_intensity', 'centroid', ], cache=True, separator='-')
+    rp_tab = measure.regionprops_table(
+        seg_new,
+        intensity_image=img,
+        properties=["label", "area", "mean_intensity", "centroid",],
+        cache=True,
+        separator="-",
+    )
     tab = pandas.DataFrame(rp_tab)
 
-
     for col_name, other_img in other_imgs.items():
-        other_tab = measure.regionprops_table(seg_new, intensity_image=other_img, properties=['mean_intensity' ], cache=True, separator='-')
-        other_vals = other_tab['mean_intensity']
+        other_tab = measure.regionprops_table(
+            seg_new,
+            intensity_image=other_img,
+            properties=["mean_intensity"],
+            cache=True,
+            separator="-",
+        )
+        other_vals = other_tab["mean_intensity"]
 
-        tab[col_name+'_mean_intensity'] = other_vals
+        tab[col_name + "_mean_intensity"] = other_vals
 
-    global_info_df = pandas.DataFrame({
-        "Total count" : len(tab),
-        "Min-area"    : args.min_area,
-        "Max-area"    : args.max_area,
-        "Min-circularity"    : args.min_circ,
-        "Min-roundness"    : args.min_round,
-        "Min-solidity"    : args.min_solid,
-    }, index=[0])
+    global_info_df = pandas.DataFrame(
+        {
+            "Total count": len(tab),
+            "Min-area": args.min_area,
+            "Max-area": args.max_area,
+            "Min-circularity": args.min_circ,
+            "Min-roundness": args.min_round,
+            "Min-solidity": args.min_solid,
+        },
+        index=[0],
+    )
 
     dyn_thresh_df = {}
-    helper  = "FGHI"
+    helper = "FGHI"
     helper2 = "BCDE"
 
     start_row = 12
@@ -216,13 +290,13 @@ def run_file(fn, args, display):
         dyn_thresh_df[col_name] = [0]
 
         # data range of column
-        rng  = f'{helper[col_i]}{start_row}:{helper[col_i]}{start_row+len(tab)-1}'
+        rng = f"{helper[col_i]}{start_row}:{helper[col_i]}{start_row+len(tab)-1}"
 
         # condition field
         cond = f'">"&{helper2[col_i]}5'
 
         # add
-        dyn_thresh_df[col_name].append(f'=COUNTIFS({rng}, {cond} )')
+        dyn_thresh_df[col_name].append(f"=COUNTIFS({rng}, {cond} )")
 
         # combine to total (AND)
         total_countif.append(f"{rng},{cond}")
@@ -230,7 +304,9 @@ def run_file(fn, args, display):
     total_countif = ",".join(total_countif)
     total_countif = f"=COUNTIFS({total_countif})"
 
-    dyn_thresh_df = pandas.DataFrame(dyn_thresh_df, index=["Intensity thresh.", "Count"])
+    dyn_thresh_df = pandas.DataFrame(
+        dyn_thresh_df, index=["Intensity thresh.", "Count"]
+    )
 
     dyn_thresh_df["Total (AND)"] = ["", total_countif]
 
@@ -240,6 +316,7 @@ def run_file(fn, args, display):
         tab.to_excel(writer, startrow=10, index=False)
 
     print(f" -> Done")
+
 
 def main():
     warnings.simplefilter("ignore")
@@ -260,11 +337,6 @@ def main():
     print("Finished")
 
 
-
-
-
-
 if __name__ == "__main__":
     main()
-
 
