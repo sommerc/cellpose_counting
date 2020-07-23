@@ -190,14 +190,15 @@ def run_file(fn, args, display):
     img = npy["img"]
 
     if len(img.shape) == 3:
-        img = img[..., 0]
+        # CellPose alters the img when opened and saved from GUI
+        # no idea why...
+        img = img[..., 2].astype(numpy.float32)
+        img = ((img / img.max()) * 255).astype(numpy.uint8)
 
     seg = npy["masks"]
 
     # relabel
     seg = measure.label(seg)
-
-    print("a", seg.shape, img.shape)
 
     # remove holes
     rp = measure.regionprops(seg)
@@ -207,8 +208,6 @@ def run_file(fn, args, display):
             no_holes = binary_fill_holes(r.image)
             y_coords, x_coords = numpy.nonzero(no_holes)
             seg[r.bbox[0] + y_coords, r.bbox[1] + x_coords] = r.label
-
-    print("b", seg.shape, img.shape)
 
     # check for other images to quantify
     if fn_base.endswith("_seg"):
@@ -223,8 +222,6 @@ def run_file(fn, args, display):
         col_name = other_img_fn[len(fn_base) : -4]
         print("  -- loading auxilary image", col_name)
         other_imgs[col_name] = tifffile.imread(other_img_fn)
-
-    print("c", seg.shape, img.shape)
 
     seg_new, rp_tab = apply_filter(
         seg,
