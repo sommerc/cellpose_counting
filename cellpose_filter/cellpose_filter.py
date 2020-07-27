@@ -22,7 +22,7 @@ description = """Filter cellpose segmentations and create filtered tif and csv o
 to_delete = []
 
 
-def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3, title=""):
+def seg_show(img, rp, seg, seg2, other_imgs, other_rps, ax=None, alpha=0.3, title=""):
     border = segmentation.find_boundaries(seg, mode="inner")
     border2 = segmentation.find_boundaries(seg2, mode="inner")
 
@@ -40,9 +40,10 @@ def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3, title=""):
     bcmap = matplotlib.colors.ListedColormap(bcmap)
 
     class MyFormatter(object):
-        def __init__(self, seg, rp):
+        def __init__(self, seg, rp, other_rps):
             self.seg = seg
             self.rp = rp
+            self.other_rps = other_rps
 
         def __call__(self, x, y, **kwargs):
             try:
@@ -56,6 +57,9 @@ def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3, title=""):
             res = ""
             for feat in ["area", "circularity", "roundness", "solidity"]:
                 res += f"{feat}: {getattr(self.rp[label-1], feat):0.3f}\n"
+
+            for col_name, o_rp in other_rps.items():
+                res += f"mean int. {col_name}: {getattr(self.other_rps[col_name][label-1], 'mean_intensity'):0.3f}\n"
 
             return res
 
@@ -86,7 +90,7 @@ def seg_show(img, rp, seg, seg2, other_imgs, ax=None, alpha=0.3, title=""):
 
     plt.tight_layout()
 
-    datacursor(artists=ax_cp, formatter=MyFormatter(seg, rp), hover=True)
+    datacursor(artists=ax_cp, formatter=MyFormatter(seg, rp, other_rps), hover=True)
 
     def onclick(event):
 
@@ -209,6 +213,9 @@ def run_file(fn, args, display):
             y_coords, x_coords = numpy.nonzero(no_holes)
             seg[r.bbox[0] + y_coords, r.bbox[1] + x_coords] = r.label
 
+    # remeasure (after filling holes)
+    rp = measure.regionprops(seg)
+
     # check for other images to quantify
     if fn_base.endswith("_seg"):
         fn_base = fn_base[:-4]
@@ -218,10 +225,14 @@ def run_file(fn, args, display):
             fn_base = fn_base = fn_base[: -len(color)]
 
     other_imgs = {}
+    other_rps = {}
     for other_img_fn in glob.glob(f"{fn_base}*.tif"):
         col_name = other_img_fn[len(fn_base) : -4]
         print("  -- loading auxilary image", col_name)
         other_imgs[col_name] = tifffile.imread(other_img_fn)
+        other_rps[col_name] = measure.regionprops(
+            seg, intensity_image=other_imgs[col_name]
+        )
 
     seg_new, rp_tab = apply_filter(
         seg,
@@ -233,7 +244,15 @@ def run_file(fn, args, display):
         min_solidity=args.min_solid,
     )
     if display:
-        seg_show(img, rp_tab, seg, seg_new, other_imgs, title=os.path.basename(fn_base))
+        seg_show(
+            img,
+            rp_tab,
+            seg,
+            seg_new,
+            other_imgs,
+            other_rps,
+            title=os.path.basename(fn_base),
+        )
         plt.show()
 
     global to_delete
