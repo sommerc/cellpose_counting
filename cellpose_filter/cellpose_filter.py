@@ -59,7 +59,8 @@ def seg_show(img, rp, seg, seg2, other_imgs, other_rps, ax=None, alpha=0.3, titl
                 res += f"{feat}: {getattr(self.rp[label-1], feat):0.3f}\n"
 
             for col_name, o_rp in other_rps.items():
-                res += f"mean int. {col_name}: {getattr(self.other_rps[col_name][label-1], 'mean_intensity'):0.3f}\n"
+
+                res += f"mean int. {col_name}: {getattr(self.other_rps[col_name][len(self.other_rps[col_name])//2][label-1], 'mean_intensity'):0.3f}\n"
 
             return res
 
@@ -80,7 +81,7 @@ def seg_show(img, rp, seg, seg2, other_imgs, other_rps, ax=None, alpha=0.3, titl
     ax_cp_flt.set_title("Filtered (double click on cell to delete)")
 
     for i, (col_name, other_im) in enumerate(other_imgs.items()):
-        ax_other[i].imshow(other_im, "gray")
+        ax_other[i].imshow(other_im[other_im.shape[0] // 2], "gray")
         ax_other[i].set_title(col_name)
 
     for a in ax.flat:
@@ -90,7 +91,9 @@ def seg_show(img, rp, seg, seg2, other_imgs, other_rps, ax=None, alpha=0.3, titl
 
     plt.tight_layout()
 
-    datacursor(artists=ax_cp, formatter=MyFormatter(seg, rp, other_rps), hover=True)
+    datacursor(
+        artists=ax_cp, formatter=MyFormatter(seg, rp, other_rps), hover=True,
+    )
 
     def onclick(event):
 
@@ -185,6 +188,7 @@ def get_args():
 
 
 def run_file(fn, args, display):
+
     print(f" * Process {fn}")
     args = get_args()
 
@@ -230,9 +234,15 @@ def run_file(fn, args, display):
         col_name = other_img_fn[len(fn_base) : -4]
         print("  -- loading auxilary image", col_name)
         other_imgs[col_name] = tifffile.imread(other_img_fn)
-        other_rps[col_name] = measure.regionprops(
-            seg, intensity_image=other_imgs[col_name]
-        )
+        if len(other_imgs[col_name].shape) == 2:
+            other_imgs[col_name] = other_imgs[col_name][None, ...]
+
+        other_rps[col_name] = {}
+        for z in range(other_imgs[col_name].shape[0]):
+
+            other_rps[col_name][z] = measure.regionprops(
+                seg, intensity_image=other_imgs[col_name][z]
+            )
 
     seg_new, rp_tab = apply_filter(
         seg,
@@ -271,16 +281,19 @@ def run_file(fn, args, display):
     tab = pandas.DataFrame(rp_tab)
 
     for col_name, other_img in other_imgs.items():
-        other_tab = measure.regionprops_table(
-            seg_new,
-            intensity_image=other_img,
-            properties=["mean_intensity"],
-            cache=True,
-            separator="-",
-        )
-        other_vals = other_tab["mean_intensity"]
+        for z in range(other_img.shape[0]):
+            other_tab = measure.regionprops_table(
+                seg_new,
+                intensity_image=other_img[z],
+                properties=["mean_intensity"],
+                cache=True,
+                separator="-",
+            )
+            other_vals = other_tab["mean_intensity"]
 
-        tab[col_name + "_mean_intensity"] = other_vals
+            tab[
+                col_name + "_mean_intensity" + f"_{z - (other_img.shape[0]//2)}"
+            ] = other_vals
 
     global_info_df = pandas.DataFrame(
         {
