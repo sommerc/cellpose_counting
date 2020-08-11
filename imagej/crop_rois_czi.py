@@ -68,8 +68,9 @@ def get_roi_images(imp):
         local_roi = roi.clone()
         local_roi.setLocation(0,0)
         roi_img.setRoi(local_roi)
-        for c in range(1, imp.getNChannels()+1):
-            roi_img.getStack().getProcessor(c).fillOutside(local_roi)
+        for z in range(1, roi_img.getNSlices() + 1):
+            for c in range(1, imp.getNChannels()+1):
+                roi_img.getStack().getProcessor(roi_img.getStackIndex(c, z,1)).fillOutside(local_roi)
 
         res.append(roi_img)
 
@@ -92,11 +93,11 @@ def main():
             # segmentation channel only single slice
             if channel_colors[c+1] == seg_choice:
                 central_slice = int(ch_img.getNSlices() / 2 + 1)
-                ch_img = Duplicator().run(ch_img, 1, 1, central_slice, central_slice, 1, 1)
+                ch_img = Duplicator().run(ch_img.clone(), 1, 1, central_slice, central_slice, 1, 1)
             
             IJ.saveAs(ch_img, "Tiff", out_fn)
         
-    #os.system("explorer {}".format(out_dir))
+    os.system("explorer {}".format(out_dir))
 
     if run_cp:
         import subprocess
