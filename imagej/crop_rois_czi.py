@@ -1,5 +1,5 @@
 #@ ImagePlus(label="Input Image") imp
-#@ File out_dir (label="Output directory", style="directory")
+#@ File (label="Output directory", style="directory") out_dir
 #@ String (visibility=MESSAGE, value="<html><b>Split and cut ROIs for CellPose</b></html>") msg1
 #@ String (visibility=MESSAGE, value="Channels will be split and files for each ROI in RoiManager will be saved as tif") msg2
 #@ String (visibility=MESSAGE, value="<html><b>Mapping of filters from CZI metadata</b><br/><ol><li>Hoechst 33342 &nbsp;: blue</li><li>Alexa Fluor 488 : green</li><li>Alexa Fluor 594 : red</li><li>Alexa Fluor 647 : yellow</li></ol></html>") msg3
@@ -31,9 +31,9 @@ CELLPOSE_CMD_TEMP = "python -m cellpose --dir {dir} --img_filter {seg_choice} --
 # functions
 
 def get_original_fileinfo(imp):
-    fn = imp.getProp("Location")
-    fn_dir  = os.path.dirname(fn)
-    fn_base = os.path.basename(fn)
+    fileInfo = imp.getOriginalFileInfo()
+    fn_dir  = fileInfo.directory
+    fn_base = fileInfo.fileName
     fn_base, fn_ext  = os.path.splitext(fn_base)
     return fn_dir, fn_base, fn_ext
     
@@ -87,6 +87,7 @@ def main():
 
     for r, im in enumerate(roi_images):
         im_channels = ChannelSplitter().split(im)
+        
         for c, ch_img in enumerate(im_channels):
             out_fn = os.path.join(str(out_dir), "{}_ROI_{:02d}_{}.tif".format(fn_base, r, channel_colors[c+1]))
 
@@ -107,3 +108,4 @@ def main():
  
 if __name__ in ("__main__", "__builtin__"):
     main()
+    print("Done")

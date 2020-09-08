@@ -26,9 +26,10 @@ def seg_show(img, rp, seg, seg2, other_imgs, other_rps, ax=None, alpha=0.3, titl
     border = segmentation.find_boundaries(seg, mode="inner")
     border2 = segmentation.find_boundaries(seg2, mode="inner")
 
-    vmax = max(seg.max(), seg2.max())
+    vmax = max(seg.max(), seg2.max(), 1)
 
     cmap = numpy.random.rand(vmax, 4)
+
     cmap[0, :] = [0, 0, 0, 1]
     cmap[:, 3] = alpha
     cmap = matplotlib.colors.ListedColormap(cmap)
@@ -278,9 +279,11 @@ def run_file(fn, args, display):
         cache=True,
         separator="-",
     )
+
     tab = pandas.DataFrame(rp_tab)
 
     for col_name, other_img in other_imgs.items():
+        tab[col_name + f"_mean_intensity_z_avg"] = 0
         for z in range(other_img.shape[0]):
             other_tab = measure.regionprops_table(
                 seg_new,
@@ -295,6 +298,8 @@ def run_file(fn, args, display):
                 col_name + "_mean_intensity" + f"_{z - (other_img.shape[0]//2)}"
             ] = other_vals
 
+            tab[col_name + f"_mean_intensity_z_avg"] += other_vals / other_img.shape[0]
+
     global_info_df = pandas.DataFrame(
         {
             "Total count": len(tab),
@@ -308,18 +313,20 @@ def run_file(fn, args, display):
     )
 
     dyn_thresh_df = {}
-    helper = "FGHI"
+    helper = "FGHIJKLMNOPQRST"
     helper2 = "BCDE"
 
     start_row = 12
 
     total_countif = []
-    for col_i, col_name in enumerate(other_imgs.keys()):
+    col_cnt = 0
+    col_cnt_list = []
+    for col_i, (col_name, other_img) in enumerate(other_imgs.items()):
         # set thershold to zero
         dyn_thresh_df[col_name] = [0]
 
         # data range of column
-        rng = f"{helper[col_i]}{start_row}:{helper[col_i]}{start_row+len(tab)-1}"
+        rng = f"{helper[col_cnt]}{start_row}:{helper[col_cnt]}{start_row+len(tab)-1}"
 
         # condition field
         cond = f'">"&{helper2[col_i]}5'
@@ -329,6 +336,10 @@ def run_file(fn, args, display):
 
         # combine to total (AND)
         total_countif.append(f"{rng},{cond}")
+
+        col_cnt_list.append(col_cnt + 5)
+
+        col_cnt += other_img.shape[0] + 1
 
     total_countif = ",".join(total_countif)
     total_countif = f"=COUNTIFS({total_countif})"
@@ -343,6 +354,16 @@ def run_file(fn, args, display):
         global_info_df.to_excel(writer, index=False)
         dyn_thresh_df.to_excel(writer, startrow=3)
         tab.to_excel(writer, startrow=10, index=False)
+        workbook = writer.book
+        worksheet = writer.sheets["Sheet1"]
+
+        for i, (col_name, other_img) in enumerate(other_imgs.items()):
+            val = col_name + f"_mean_intensity_z_avg"
+            cell_format = workbook.add_format()
+            cell_format.set_bold()
+            cell_format.set_bg_color(col_name)
+
+            worksheet.write(start_row - 3, col_cnt_list[i], None, cell_format)
 
     print(f" -> Done")
 
