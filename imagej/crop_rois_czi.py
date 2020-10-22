@@ -26,7 +26,7 @@ CHANNEL_TO_COLOR = {
     "Alexa Fluor 594" : "red"
 }
 
-CELLPOSE_CMD_TEMP = "python -m cellpose --dir "{dir}" --img_filter {seg_choice} --use_gpu --pretrained_model cyto --diameter {diameter}"
+CELLPOSE_CMD_TEMP = 'python -m cellpose --dir "{dir}" --img_filter {seg_choice} --use_gpu --pretrained_model cyto --diameter {diameter}"'
 
 # functions
 
