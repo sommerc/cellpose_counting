@@ -48,7 +48,7 @@ def get_channel_colors(imp, channel_key):
     for c in range(1, imp.getNChannels()+1):
         c_info = imp.getProp(channel_key.format(c))
         if c_info in CHANNEL_TO_COLOR:
-            print(c, "is", CHANNEL_TO_COLOR[c_info])
+            print("  --Channel {} is {}".format(c, CHANNEL_TO_COLOR[c_info]))
             channel_color[c] = CHANNEL_TO_COLOR[c_info]
     return channel_color
 
@@ -67,6 +67,8 @@ def get_roi_images(imp):
     res = []
 
     NZ = imp.getNSlices()
+    if NZ == 1:
+        print(" -- Single z image, ignoring z-slice selection")
 
     
     
@@ -96,7 +98,7 @@ def main():
 
     fn_ext = fn_ext.lower()
 
-    print(fn_ext)
+    print(" -- Found file type: {}".format(fn_ext))
     
     if not fn_ext in META_DATA_CHANNEL_NAME_LKP.keys():
         IJ.showMessage("Only lsm and czi formats suported. Exiting")
