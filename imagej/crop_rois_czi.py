@@ -23,11 +23,17 @@ CHANNEL_TO_COLOR = {
     "Alexa Fluor 488" : "green",
     "Hoechst 33342"   : "blue",
     "Alexa Fluor 647" : "yellow",
-    "Alexa Fluor 594" : "red"
+    "Alexa Fluor 594" : "red",
+    "Alexa Fluor 555" : "red",
+    "DAPI"            : "blue"
 }
 
 CELLPOSE_CMD_TEMP = 'python -m cellpose --dir "{dir}" --img_filter {seg_choice} --use_gpu --pretrained_model cyto --diameter {diameter}"'
 
+META_DATA_CHANNEL_NAME_LKP = {
+    ".czi" : "Information|Image|Channel|Fluor #{}",
+    ".lsm" : "DetectionChannel Dye Name #{}"
+}
 # functions
 
 def get_original_fileinfo(imp):
@@ -37,10 +43,10 @@ def get_original_fileinfo(imp):
     fn_base, fn_ext  = os.path.splitext(fn_base)
     return fn_dir, fn_base, fn_ext
     
-def get_channel_colors(imp):
+def get_channel_colors(imp, channel_key):
     channel_color = {}
     for c in range(1, imp.getNChannels()+1):
-        c_info = imp.getProp("Information|Image|Channel|Fluor #{}".format(c))
+        c_info = imp.getProp(channel_key.format(c))
         if c_info in CHANNEL_TO_COLOR:
             print(c, "is", CHANNEL_TO_COLOR[c_info])
             channel_color[c] = CHANNEL_TO_COLOR[c_info]
@@ -61,10 +67,16 @@ def get_roi_images(imp):
     res = []
 
     NZ = imp.getNSlices()
+
     
-    for roi in rois:
+    
+    for roi in rois:    
         imp.setRoi(roi)
-        roi_img = Duplicator().run(imp, 1, imp.getNChannels(), max(roi.getZPosition()-z_rng, 1), min(NZ, roi.getZPosition()+ z_rng), 1, 1) 
+        if NZ > 1:
+            roi_img = Duplicator().run(imp, 1, imp.getNChannels(), max(roi.getZPosition()-z_rng, 1), min(NZ, roi.getZPosition()+ z_rng), 1, 1) 
+        else:
+            roi_img = Duplicator().run(imp, 1, imp.getNChannels(), 1, 1, 1, 1) 
+
         local_roi = roi.clone()
         local_roi.setLocation(0,0)
         roi_img.setRoi(local_roi)
@@ -81,9 +93,30 @@ def get_roi_images(imp):
 
 def main():
     fn_dir, fn_base, fn_ext = get_original_fileinfo(imp)
+
+    fn_ext = fn_ext.lower()
+
+    print(fn_ext)
+    
+    if not fn_ext in META_DATA_CHANNEL_NAME_LKP.keys():
+        IJ.showMessage("Only lsm and czi formats suported. Exiting")
+        return
+
+    channel_key = META_DATA_CHANNEL_NAME_LKP[fn_ext]
+
+    if imp.getProp(channel_key.format(1)) is None:
+        IJ.showMessage("Channel meta data not found. Did you open with BioFormats importer?")
+        return
+        
+
+
+    
+    channel_colors = get_channel_colors(imp, channel_key)
+
+        
     
     roi_images = get_roi_images(imp)
-    channel_colors = get_channel_colors(imp)
+    
 
     for r, im in enumerate(roi_images):
         im_channels = ChannelSplitter().split(im)
