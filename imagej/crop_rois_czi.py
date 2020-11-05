@@ -2,7 +2,7 @@
 #@ File (label="Output directory", style="directory") out_dir
 #@ String (visibility=MESSAGE, value="<html><b>Split and cut ROIs for CellPose</b></html>") msg1
 #@ String (visibility=MESSAGE, value="Channels will be split and files for each ROI in RoiManager will be saved as tif") msg2
-#@ String (visibility=MESSAGE, value="<html><b>Mapping of filters from CZI metadata</b><br/><ol><li>Hoechst 33342 &nbsp;: blue</li><li>Alexa Fluor 488 : green</li><li>Alexa Fluor 594 : red</li><li>Alexa Fluor 647 : yellow</li></ol></html>") msg3
+#@ String (visibility=MESSAGE, value="<html><b>Mapping of filters from CZI metadata</b><br/><ol><li>Hoechst 33342 &nbsp;: blue</li><li>Alexa Fluor 488 : green</li><li>Alexa Fluor 594 : red</li><li>Alexa Fluor 555 : red</li><li>Alexa Fluor 647 : yellow</li></ol></html>") msg3
 #@ String (label="Color for segmentation", choices={"blue", "green", "red", "yellow"}, style="listBox") seg_choice
 #@ Integer (label="Export channels with z-slices +-", value=1, min=0, max=3) z_rng
 #@ boolean (value=false, label="Copy CellPose run command to clipboard") run_cp
