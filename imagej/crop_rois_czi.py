@@ -21,6 +21,7 @@ from ij.plugin import Duplicator, ChannelSplitter
 
 CHANNEL_TO_COLOR = {
     "Alexa Fluor 488": "green",
+    "EGFP": "green",
     "Hoechst 33342": "blue",
     "Alexa Fluor 647": "yellow",
     "Alexa Fluor 594": "red",
