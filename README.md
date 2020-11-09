@@ -1,4 +1,4 @@
-# Cell counting pipeline for brain organoids imaged
+# Cell counting pipeline for brain organoids
 ---
 This repository contains a pipeline for semi-automatic cell and cell positive
 counting in multi-channel z-stacks.
