@@ -56,7 +56,7 @@ optional arguments:
   --min-area MIN_AREA   Minimum area in pixels
   --max-area MAX_AREA   Maximum area in pixels
   --min-circularity MIN_CIRC
-                        Minimum circlularity (0-1;1 being perfect circle)
+                        Minimum circularity (0-1;1 being perfect circle)
   --min-roundness MIN_ROUND
                         Minimum roundness (0-1;1 being perfect circle)
   --min-solidity MIN_SOLID
@@ -66,7 +66,7 @@ optional arguments:
 
 #### Output:
 In the same folder as input file
-* Excel table with filtered results
+* Excel table with mean intensities per channel for filtered cells.
 
 ---
 ## Installation
