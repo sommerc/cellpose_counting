@@ -1,16 +1,35 @@
-## Cut and crop ImageJ macro
-see [crop_rois_czi.py](./imagej/README.md)
+# Cell counting pipeline for brain organoids imaged
+---
+This repository contains a pipeline for semi-automatic cell and cell positive
+counting in multi-channel z-stacks.
 
-## CellPose filter
+The pipeline is based on cell segmentation with pretrained deep learning networks
+ [CellPose](http://www.cellpose.org/) and supports images from Zeiss microscopes (.czi, .lsm).
 
-## Install
-Anaconda Python distribution with Python >= 3.6 recommended
 
-1. git clone this repository
-2. `cd cellpose_filter`
-3. `pip install -e .
+ ## Steps
+ ### 1. Extract counting regions
+ * Define region of interests in ImageJ/Fiji and add to *ROIManager*
+ * Use Fiji/jython script in [imagej](./imagej/README.md) to extract cropped counting regions
+ * Select channel name for segmentation (e.g. *blue*)
+ * Choose number of z-planes used as basis for later count (e.g. *+-1*)
+ * Enter approximate cell diameter
 
-## Usage
+ Die command to run CellPose on extracted regions of interest will automatically be copied to clipboard
+
+ ### 2. Run CellPose
+ * Open command shell
+ * Paste CellPose command (`RIGHT-click` or `CTRL+V`)
+
+### 3. CellPose filter
+
+#### Example: single file: *<my_seg.npy>*
+`$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <my_seg.npy>`
+
+#### Example: batch for folder containing *_seg.npy* files
+`$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <folder containing files>`
+
+#### Full usage and options
 From Anaconda prompt
 
 * Get help information
@@ -44,15 +63,15 @@ optional arguments:
                         Minimum solidity (0-1; ratio of region and its convex hull
 ```
 
-## Example processing:
 
-### Single file: *<my_seg.npy>*
-`$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <my_seg.npy>`
-
-### Entire folder containing *_seg.npy* files
-`$ cellpose_filter --min-area 100 --max-area 4000 --min-circularity 0.8 <folder containing files>`
-
-## Output:
+#### Output:
 In the same folder as input file
 * Excel table with filtered results
 
+---
+## Installation
+Anaconda Python distribution with Python >= 3.6 recommended
+
+1. git clone this repository
+2. `cd cellpose_filter`
+3. `pip install -e .`
