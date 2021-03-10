@@ -27,6 +27,9 @@ CHANNEL_TO_COLOR = {
     "Alexa Fluor 594": "red",
     "Alexa Fluor 555": "red",
     "DAPI": "blue",
+    "2 (DAPI)" : "blue",
+    "6 (Texas Red HYQ)" : "red"
+    
 }
 
 CELLPOSE_CMD_TEMP = 'python -m cellpose --dir "{dir}" --img_filter {seg_choice} --use_gpu --pretrained_model cyto --diameter {diameter}"'
@@ -34,6 +37,7 @@ CELLPOSE_CMD_TEMP = 'python -m cellpose --dir "{dir}" --img_filter {seg_choice} 
 META_DATA_CHANNEL_NAME_LKP = {
     ".czi": "Information|Image|Channel|Fluor #{}",
     ".lsm": "DetectionChannel Dye Name #{}",
+    ".nd2": "Nikon Ti, FilterChanger(Turret1) #{}"
 }
 # functions
 
@@ -50,6 +54,7 @@ def get_channel_colors(imp, channel_key):
     channel_color = {}
     for c in range(1, imp.getNChannels() + 1):
         c_info = imp.getProp(channel_key.format(c))
+#        print(c_info)
         if c_info in CHANNEL_TO_COLOR:
             print("  --Channel {} is {}".format(c, CHANNEL_TO_COLOR[c_info]))
             channel_color[c] = CHANNEL_TO_COLOR[c_info]
@@ -120,6 +125,7 @@ def main():
 
     channel_key = META_DATA_CHANNEL_NAME_LKP[fn_ext]
 
+    #print(channel_key.format(1))
     if imp.getProp(channel_key.format(1)) is None:
         IJ.showMessage(
             "Channel meta data not found. Did you open with BioFormats importer?"
